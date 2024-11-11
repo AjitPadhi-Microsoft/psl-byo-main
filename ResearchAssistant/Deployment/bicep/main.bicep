@@ -14,7 +14,7 @@ var resourceGroupName = resourceGroup().name
 var subscriptionId  = subscription().subscriptionId
 
 var solutionLocation = resourceGroupLocation
-var baseUrl = 'https://raw.githubusercontent.com/Roopan-Microsoft/psl-byo-main/main/'
+var baseUrl = 'https://raw.githubusercontent.com/AjitPadhi-Microsoft/psl-byo-main/main/'
 
 // ========== Managed Identity ========== //
 module managedIdentityModule 'deploy_managed_identity.bicep' = {

@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.27.1.19265",
-      "templateHash": "7457549766663838702"
+      "version": "0.30.23.60470",
+      "templateHash": "10924092899708004983"
     }
   },
   "parameters": {
@@ -23,7 +23,7 @@
     "resourceGroupName": "[resourceGroup().name]",
     "subscriptionId": "[subscription().subscriptionId]",
     "solutionLocation": "[variables('resourceGroupLocation')]",
-    "baseUrl": "https://raw.githubusercontent.com/Roopan-Microsoft/psl-byo-main/main/"
+    "baseUrl": "https://raw.githubusercontent.com/AjitPadhi-Microsoft/psl-byo-main/main/"
   },
   "resources": [
     {
@@ -50,8 +50,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "14492986622884712635"
+              "version": "0.30.23.60470",
+              "templateHash": "8775325455752085588"
             }
           },
           "parameters": {
@@ -142,8 +142,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "1732388101011268083"
+              "version": "0.30.23.60470",
+              "templateHash": "6504191191293913024"
             }
           },
           "parameters": {
@@ -295,8 +295,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "11463009197950800876"
+              "version": "0.30.23.60470",
+              "templateHash": "7447797843632120632"
             }
           },
           "parameters": {
@@ -377,8 +377,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "14406720787668575764"
+              "version": "0.30.23.60470",
+              "templateHash": "1208105245776066647"
             }
           },
           "parameters": {
@@ -465,8 +465,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "655463873191032186"
+              "version": "0.30.23.60470",
+              "templateHash": "17068516411718550679"
             }
           },
           "parameters": {
@@ -599,8 +599,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "31465269254160942"
+              "version": "0.30.23.60470",
+              "templateHash": "15186598893880298559"
             }
           },
           "parameters": {
@@ -734,8 +734,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "854911663640104817"
+              "version": "0.30.23.60470",
+              "templateHash": "14462034732442305522"
             }
           },
           "parameters": {
@@ -1211,8 +1211,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "17397239230654067580"
+              "version": "0.30.23.60470",
+              "templateHash": "8283413186393200339"
             }
           },
           "parameters": {
@@ -1300,8 +1300,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "3046192829404893789"
+              "version": "0.30.23.60470",
+              "templateHash": "14942346985197681466"
             }
           },
           "parameters": {
@@ -1507,8 +1507,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "15943406030570931039"
+              "version": "0.30.23.60470",
+              "templateHash": "14830470899931391628"
             }
           },
           "parameters": {
