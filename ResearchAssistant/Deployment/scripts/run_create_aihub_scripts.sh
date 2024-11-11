@@ -40,6 +40,10 @@ sed -i "s/rg_to-be-replaced/${resourceGroupName}/g" "create_ai_hub.py"
 sed -i "s/solutionname_to-be-replaced/${solutionName}/g" "create_ai_hub.py"
 sed -i "s/solutionlocation_to-be-replaced/${solutionLocation}/g" "create_ai_hub.py"
 
+# Create and activate a virtual environment
+python -m venv myenv
+source myenv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 
 python create_ai_hub.py
