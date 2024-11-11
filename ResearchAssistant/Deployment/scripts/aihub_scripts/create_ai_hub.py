@@ -4,10 +4,11 @@ from azure.ai.ml.entities import (
     ApiKeyConfiguration,
     AzureAISearchConnection,
     AzureOpenAIConnection,
+    Workspace,
+    IdentityConfiguration
 )
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
-from azure.ai.ml.entities import Workspace
 
 
 def get_secrets_from_kv(kv_name, secret_name):
@@ -55,12 +56,15 @@ ai_search_key = get_secrets_from_kv(key_vault_name, "AZURE-SEARCH-KEY")
 # Initialize the MLClient
 ml_client = MLClient(DefaultAzureCredential(), subscription_id, resource_group_name)
 
+# Define the workspace configuration with identity-based authentication
+identity_config = IdentityConfiguration(type="SystemAssigned")
+
 # Define the hub (workspace) configuration with identity-based authentication
 my_hub = Workspace(
     name=aihub_name,
     location=solutionLocation,
     display_name=aihub_name,
-    identity={"type": "SystemAssigned"},
+    identity=identity_config,
 )
 
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
