@@ -12,6 +12,11 @@ from azure.ai.ml.entities import (
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def get_secrets_from_kv(kv_name, secret_name):
@@ -38,7 +43,8 @@ aihub_name = 'ai_hub_' + 'solutionname_to-be-replaced'
 project_name = 'ai_project_' + 'solutionname_to-be-replaced'
 deployment_name = 'draftsinference-' + 'solutionname_to-be-replaced'
 solutionLocation = 'solutionlocation_to-be-replaced'
-storage_account_name = 'storageaccount_to-be-replaced'
+storage_account_name = 'storageaihub' + 'solutionname_to-be-replaced'
+logger.info(f"storage Connection Name: {storage_account_name}")
 storage_account_resource_id = f'/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Storage/storageAccounts/{storage_account_name}'
 
 # Open AI Details
