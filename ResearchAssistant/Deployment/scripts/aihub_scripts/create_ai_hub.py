@@ -39,6 +39,7 @@ project_name = 'ai_project_' + 'solutionname_to-be-replaced'
 deployment_name = 'draftsinference-' + 'solutionname_to-be-replaced'
 solutionLocation = 'solutionlocation_to-be-replaced'
 storage_account_name = 'storageaccount_to-be-replaced'
+storage_account_resource_id = f'/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Storage/storageAccounts/{storage_account_name}'
 
 # Open AI Details
 open_ai_key = get_secrets_from_kv(key_vault_name, "AZURE-OPENAI-KEY")
@@ -76,7 +77,7 @@ ml_client = MLClient(
 # construct a hub
 my_hub = Hub(name=aihub_name, location=solutionLocation, display_name=aihub_name)
 # Specify the storage account for the hub
-my_hub.storage_account = f"https://{storage_account_name}.blob.core.windows.net"
+my_hub.storage_account = storage_account_resource_id
 
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
