@@ -1,5 +1,11 @@
 from azure.mgmt.storage import StorageManagementClient
-from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku, Kind
+from azure.mgmt.storage.models import (
+    StorageAccountCreateParameters,
+    Sku,
+    Kind,
+    Identity,
+    IdentityType,
+)
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import (
     Hub,
@@ -7,6 +13,7 @@ from azure.ai.ml.entities import (
     ApiKeyConfiguration,
     AzureAISearchConnection,
     AzureOpenAIConnection,
+    IdentityConfiguration,
 )
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
@@ -78,12 +85,15 @@ credential = DefaultAzureCredential()
 # Create a Storage Management client
 storage_client = StorageManagementClient(credential, subscription_id)
 
-# Create the storage account if it doesn't exist
+# Create the storage account with identity-based access
 storage_async_operation = storage_client.storage_accounts.begin_create(
     resource_group_name,
     storage_account_name,
     StorageAccountCreateParameters(
-        sku=Sku(name="Standard_LRS"), kind=Kind.STORAGE_V2, location=solutionLocation
+        sku=Sku(name="Standard_LRS"),
+        kind=Kind.STORAGE_V2,
+        location=solutionLocation,
+        identity=Identity(type=IdentityType.SYSTEM_ASSIGNED),
     ),
 )
 storage_account = storage_async_operation.result()
@@ -102,6 +112,7 @@ my_hub = Hub(
     location=solutionLocation,
     display_name=aihub_name,
     storage_account=storage_account.id,
+    identity=IdentityConfiguration(type="SystemAssigned"),
 )
 
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
