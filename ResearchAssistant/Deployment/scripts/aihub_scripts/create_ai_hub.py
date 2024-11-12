@@ -1,6 +1,5 @@
-# Get Azure Key Vault Client
-key_vault_name = 'kv_to-be-replaced'
-
+from azure.mgmt.storage import StorageManagementClient
+from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku, Kind
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import (
     Hub,
@@ -12,11 +11,16 @@ from azure.ai.ml.entities import (
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
+
 import logging
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Get Azure Key Vault Client
+key_vault_name = "kv_to-be-replaced"
 
 
 def get_secrets_from_kv(kv_name, secret_name):
@@ -34,18 +38,17 @@ def get_secrets_from_kv(kv_name, secret_name):
     # Retrieve the secret value
     return secret_client.get_secret(secret_name).value
 
+
 # Azure configuration
 
-key_vault_name = 'kv_to-be-replaced'
-subscription_id = 'subscription_to-be-replaced'
-resource_group_name = 'rg_to-be-replaced'
-aihub_name = 'ai_hub_' + 'solutionname_to-be-replaced'
-project_name = 'ai_project_' + 'solutionname_to-be-replaced'
-deployment_name = 'draftsinference-' + 'solutionname_to-be-replaced'
-solutionLocation = 'solutionlocation_to-be-replaced'
-storage_account_name = 'storageaihub' + 'solutionname_to-be-replaced'
-logger.info(f"storage Connection Name: {storage_account_name}")
-storage_account_resource_id = f'/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Storage/storageAccounts/{storage_account_name}'
+key_vault_name = "kv_to-be-replaced"
+subscription_id = "subscription_to-be-replaced"
+resource_group_name = "rg_to-be-replaced"
+aihub_name = "ai_hub_" + "solutionname_to-be-replaced"
+project_name = "ai_project_" + "solutionname_to-be-replaced"
+deployment_name = "draftsinference-" + "solutionname_to-be-replaced"
+solutionLocation = "solutionlocation_to-be-replaced"
+storage_account_name = "storageaihub" + "solutionname_to-be-replaced"
 
 # Open AI Details
 open_ai_key = get_secrets_from_kv(key_vault_name, "AZURE-OPENAI-KEY")
@@ -72,6 +75,19 @@ ai_search_key = get_secrets_from_kv(key_vault_name, "AZURE-SEARCH-KEY")
 # Credentials
 credential = DefaultAzureCredential()
 
+# Create a Storage Management client
+storage_client = StorageManagementClient(credential, subscription_id)
+
+# Create the storage account if it doesn't exist
+storage_async_operation = storage_client.storage_accounts.begin_create(
+    resource_group_name,
+    storage_account_name,
+    StorageAccountCreateParameters(
+        sku=Sku(name="Standard_LRS"), kind=Kind.STORAGE_V2, location=solutionLocation
+    ),
+)
+storage_account = storage_async_operation.result()
+
 # Create an ML client
 ml_client = MLClient(
     workspace_name=aihub_name,
@@ -80,16 +96,13 @@ ml_client = MLClient(
     credential=credential,
 )
 
-# Create a BlobServiceClient object using the credential and storage account URL
-blob_service_client = BlobServiceClient(
-    account_url=f"https://{storage_account_name}.blob.core.windows.net",
-    credential=credential
-)
-
 # construct a hub
-my_hub = Hub(name=aihub_name, location=solutionLocation, display_name=aihub_name)
-# Specify the storage account for the hub
-my_hub.storage_account = storage_account_resource_id
+my_hub = Hub(
+    name=aihub_name,
+    location=solutionLocation,
+    display_name=aihub_name,
+    storage_account=storage_account.id,
+)
 
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
@@ -108,7 +121,7 @@ open_ai_connection = AzureOpenAIConnection(
     api_key=open_ai_key,
     api_version=openai_api_version,
     azure_endpoint=f"https://{open_ai_res_name}.openai.azure.com/",
-    open_ai_resource_id=f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.CognitiveServices/accounts/{open_ai_res_name}"
+    open_ai_resource_id=f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.CognitiveServices/accounts/{open_ai_res_name}",
 )
 
 ml_client.connections.create_or_update(open_ai_connection)
@@ -122,8 +135,15 @@ aisearch_connection = AzureAISearchConnection(
     credentials=ApiKeyConfiguration(key=ai_search_key),
 )
 
-aisearch_connection.tags["ResourceId"] = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Search/searchServices/{ai_search_res_name}"
+aisearch_connection.tags["ResourceId"] = (
+    f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Search/searchServices/{ai_search_res_name}"
+)
 aisearch_connection.tags["ApiVersion"] = "2024-05-01-preview"
 
 ml_client.connections.create_or_update(aisearch_connection)
 
+# Create a BlobServiceClient object using the credential and storage account URL
+blob_service_client = BlobServiceClient(
+    account_url=f"https://{storage_account_name}.blob.core.windows.net",
+    credential=credential,
+)
