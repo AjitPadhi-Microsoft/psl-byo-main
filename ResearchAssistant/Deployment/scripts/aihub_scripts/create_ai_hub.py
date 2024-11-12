@@ -102,7 +102,16 @@ try:
     if not open_ai_connection.name or not open_ai_connection.api_key or not open_ai_connection.api_version or not open_ai_connection.azure_endpoint or not open_ai_connection.open_ai_resource_id:
         raise ValueError("One or more required attributes for AzureOpenAIConnection are missing")
 
-    ml_client.connections.create_or_update(open_ai_connection)
+    # Explicitly set the attributes in the request
+    connection_request = {
+        "name": open_ai_connection.name,
+        "api_key": open_ai_connection.api_key,
+        "api_version": open_ai_connection.api_version,
+        "azure_endpoint": open_ai_connection.azure_endpoint,
+        "open_ai_resource_id": open_ai_connection.open_ai_resource_id,
+    }
+
+    ml_client.connections.create_or_update(connection_request)
 
     target = f"https://{ai_search_res_name}.search.windows.net/"
 
