@@ -17,6 +17,7 @@ from azure.mgmt.storage.models import (
     Kind,
     Identity,
     IdentityType,
+    StorageAccountUpdateParameters,
 )
 
 
@@ -65,6 +66,15 @@ storage_async_operation = storage_client.storage_accounts.begin_create(
     ),
 )
 storage_account = storage_async_operation.result()
+
+# Disable key-based access for the storage account
+storage_client.storage_accounts.update(
+    resource_group_name,
+    storage_account_name,
+    StorageAccountUpdateParameters(
+        allow_blob_public_access=False, allow_shared_key_access=False
+    ),
+)
 
 # Get the storage account resource ID
 storage_account_resource_id = storage_account.id
