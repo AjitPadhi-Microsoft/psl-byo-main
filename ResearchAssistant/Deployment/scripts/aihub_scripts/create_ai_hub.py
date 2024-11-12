@@ -1,3 +1,4 @@
+import uuid
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import (
     Hub,
@@ -19,6 +20,8 @@ from azure.mgmt.storage.models import (
     IdentityType,
     StorageAccountUpdateParameters,
 )
+from azure.mgmt.authorization import AuthorizationManagementClient
+from azure.mgmt.authorization.models import RoleAssignmentCreateParameters
 
 
 def get_secrets_from_kv(kv_name, secret_name):
@@ -119,6 +122,18 @@ my_hub = Hub(
 )
 
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
+
+# Assign the managed identity of the hub access to the storage account
+authorization_client = AuthorizationManagementClient(credential, subscription_id)
+role_assignment_params = RoleAssignmentCreateParameters(
+    role_definition_id=f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/{role_id}",  # Replace with the appropriate role ID
+    principal_id=created_hub.identity.principal_id,
+)
+authorization_client.role_assignments.create(
+    scope=storage_account_resource_id,
+    role_assignment_name=str(uuid.uuid4()),
+    parameters=role_assignment_params,
+)
 
 # Construct the project
 my_project = Project(
