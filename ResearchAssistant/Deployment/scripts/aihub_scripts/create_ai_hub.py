@@ -11,6 +11,8 @@ from azure.ai.ml.entities import (
 )
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
+
 
 def get_secrets_from_kv(kv_name, secret_name):
     # Set the name of the Azure Key Vault
@@ -36,6 +38,7 @@ aihub_name = 'ai_hub_' + 'solutionname_to-be-replaced'
 project_name = 'ai_project_' + 'solutionname_to-be-replaced'
 deployment_name = 'draftsinference-' + 'solutionname_to-be-replaced'
 solutionLocation = 'solutionlocation_to-be-replaced'
+storage_account_name = 'storageaccount_to-be-replaced'
 
 # Open AI Details
 open_ai_key = get_secrets_from_kv(key_vault_name, "AZURE-OPENAI-KEY")
@@ -72,6 +75,8 @@ ml_client = MLClient(
 
 # construct a hub
 my_hub = Hub(name=aihub_name, location=solutionLocation, display_name=aihub_name)
+# Specify the storage account for the hub
+my_hub.storage_account = f"https://{storage_account_name}.blob.core.windows.net"
 
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
@@ -108,3 +113,9 @@ aisearch_connection.tags["ResourceId"] = f"/subscriptions/{subscription_id}/reso
 aisearch_connection.tags["ApiVersion"] = "2024-05-01-preview"
 
 ml_client.connections.create_or_update(aisearch_connection)
+
+# Create a BlobServiceClient object using the credential and storage account URL
+blob_service_client = BlobServiceClient(
+    account_url=f"https://{storage_account_name}.blob.core.windows.net",
+    credential=credential
+)
