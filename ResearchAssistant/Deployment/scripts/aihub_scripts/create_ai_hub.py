@@ -126,7 +126,7 @@ created_hub = ml_client.workspaces.begin_create(my_hub).result()
 # Assign the managed identity of the hub access to the storage account
 authorization_client = AuthorizationManagementClient(credential, subscription_id)
 role_assignment_params = RoleAssignmentCreateParameters(
-    role_definition_id=f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/{role_id}",  # Replace with the appropriate role ID
+    role_definition_id=f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",  # Replace with the appropriate role ID
     principal_id=created_hub.identity.principal_id,
 )
 authorization_client.role_assignments.create(
