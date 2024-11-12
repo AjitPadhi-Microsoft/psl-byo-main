@@ -1,11 +1,3 @@
-from azure.mgmt.storage import StorageManagementClient
-from azure.mgmt.storage.models import (
-    StorageAccountCreateParameters,
-    Sku,
-    Kind,
-    Identity,
-    IdentityType,
-)
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import (
     Hub,
@@ -16,18 +8,16 @@ from azure.ai.ml.entities import (
     IdentityConfiguration,
 )
 from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.storage.blob import BlobServiceClient
-
-import logging
-
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Get Azure Key Vault Client
-key_vault_name = "kv_to-be-replaced"
+from azure.mgmt.storage import StorageManagementClient
+from azure.mgmt.storage.models import (
+    StorageAccountCreateParameters,
+    Sku,
+    Kind,
+    Identity,
+    IdentityType,
+)
 
 
 def get_secrets_from_kv(kv_name, secret_name):
@@ -57,6 +47,28 @@ deployment_name = "draftsinference-" + "solutionname_to-be-replaced"
 solutionLocation = "solutionlocation_to-be-replaced"
 storage_account_name = "storageaihub" + "solutionname_to-be-replaced"
 
+# Create a credential object using the default Azure credentials
+credential = DefaultAzureCredential()
+
+# Create a Storage Management client
+storage_client = StorageManagementClient(credential, subscription_id)
+
+# Create the storage account with identity-based access
+storage_async_operation = storage_client.storage_accounts.begin_create(
+    resource_group_name,
+    storage_account_name,
+    StorageAccountCreateParameters(
+        sku=Sku(name="Standard_LRS"),
+        kind=Kind.STORAGE_V2,
+        location=solutionLocation,
+        identity=Identity(type=IdentityType.SYSTEM_ASSIGNED),
+    ),
+)
+storage_account = storage_async_operation.result()
+
+# Get the storage account resource ID
+storage_account_resource_id = storage_account.id
+
 # Open AI Details
 open_ai_key = get_secrets_from_kv(key_vault_name, "AZURE-OPENAI-KEY")
 open_ai_res_name = (
@@ -79,25 +91,6 @@ ai_search_res_name = (
 )
 ai_search_key = get_secrets_from_kv(key_vault_name, "AZURE-SEARCH-KEY")
 
-# Credentials
-credential = DefaultAzureCredential()
-
-# Create a Storage Management client
-storage_client = StorageManagementClient(credential, subscription_id)
-
-# Create the storage account with identity-based access
-storage_async_operation = storage_client.storage_accounts.begin_create(
-    resource_group_name,
-    storage_account_name,
-    StorageAccountCreateParameters(
-        sku=Sku(name="Standard_LRS"),
-        kind=Kind.STORAGE_V2,
-        location=solutionLocation,
-        identity=Identity(type=IdentityType.SYSTEM_ASSIGNED),
-    ),
-)
-storage_account = storage_async_operation.result()
-
 # Create an ML client
 ml_client = MLClient(
     workspace_name=aihub_name,
@@ -106,18 +99,18 @@ ml_client = MLClient(
     credential=credential,
 )
 
-# construct a hub
+# Construct a hub with the existing storage account and managed identity
 my_hub = Hub(
     name=aihub_name,
     location=solutionLocation,
     display_name=aihub_name,
-    storage_account=storage_account.id,
+    storage_account=storage_account_resource_id,
     identity=IdentityConfiguration(type="SystemAssigned"),
 )
 
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
-# construct the project
+# Construct the project
 my_project = Project(
     name=project_name,
     location=solutionLocation,
@@ -153,8 +146,8 @@ aisearch_connection.tags["ApiVersion"] = "2024-05-01-preview"
 
 ml_client.connections.create_or_update(aisearch_connection)
 
-# Create a BlobServiceClient object using the credential and storage account URL
+# Create a BlobServiceClient object using the managed identity credential and storage account URL
 blob_service_client = BlobServiceClient(
     account_url=f"https://{storage_account_name}.blob.core.windows.net",
-    credential=credential,
+    credential=ManagedIdentityCredential(),
 )
