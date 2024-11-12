@@ -80,6 +80,12 @@ ml_client = MLClient(
     credential=credential,
 )
 
+# Create a BlobServiceClient object using the credential and storage account URL
+blob_service_client = BlobServiceClient(
+    account_url=f"https://{storage_account_name}.blob.core.windows.net",
+    credential=credential
+)
+
 # construct a hub
 my_hub = Hub(name=aihub_name, location=solutionLocation, display_name=aihub_name)
 # Specify the storage account for the hub
@@ -121,8 +127,3 @@ aisearch_connection.tags["ApiVersion"] = "2024-05-01-preview"
 
 ml_client.connections.create_or_update(aisearch_connection)
 
-# Create a BlobServiceClient object using the credential and storage account URL
-blob_service_client = BlobServiceClient(
-    account_url=f"https://{storage_account_name}.blob.core.windows.net",
-    credential=credential
-)
