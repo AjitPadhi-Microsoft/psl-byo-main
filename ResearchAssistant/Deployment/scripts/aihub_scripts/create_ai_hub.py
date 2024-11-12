@@ -87,6 +87,10 @@ open_ai_connection = AzureOpenAIConnection(
     open_ai_resource_id=f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.CognitiveServices/accounts/{open_ai_res_name}",
 )
 
+# Check if all required attributes are set
+if not open_ai_connection.name or not open_ai_connection.api_key or not open_ai_connection.api_version or not open_ai_connection.azure_endpoint or not open_ai_connection.open_ai_resource_id:
+    raise ValueError("One or more required attributes for AzureOpenAIConnection are missing")
+
 ml_client.connections.create_or_update(open_ai_connection)
 
 target = f"https://{ai_search_res_name}.search.windows.net/"
