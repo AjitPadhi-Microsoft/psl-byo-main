@@ -9,7 +9,6 @@ resourceGroupName="$4"
 subscriptionId="$5"
 solutionLocation="$6"
 
-
 requirementFile="requirements.txt"
 requirementFileUrl=${baseUrl}"ResearchAssistant/Deployment/scripts/aihub_scripts/requirements.txt"
 
@@ -20,18 +19,18 @@ flowFileUrl=${baseUrl}"ResearchAssistant/Deployment/scripts/aihub_scripts/flows/
 echo "Download Started"
 
 # Download the create_index python files
-curl --output "create_ai_hub.py" ${baseUrl}"ResearchAssistant/Deployment/scripts/aihub_scripts/create_ai_hub.py"
+curl --output "create_ai_hub.py" ${baseUrl}"ResearchAssistant/Deployment/scripts/aihub_scripts/create_ai_hub.py" || { echo "Failed to download create_ai_hub.py"; exit 1; }
 
 # Download the requirement file
-curl --output "$requirementFile" "$requirementFileUrl"
+curl --output "$requirementFile" "$requirementFileUrl" || { echo "Failed to download requirements.txt"; exit 1; }
 
 echo "Download completed"
 
 # Download the flow file
-curl --output "$flowFile" "$flowFileUrl"
+curl --output "$flowFile" "$flowFileUrl" || { echo "Failed to download DraftFlow.zip"; exit 1; }
 
 # Extract the zip file
-unzip /mnt/azscripts/azscriptinput/"$flowFile" -d /mnt/azscripts/azscriptinput/"$extractedFlowFolder"
+unzip /mnt/azscripts/azscriptinput/"$flowFile" -d /mnt/azscripts/azscriptinput/"$extractedFlowFolder" || { echo "Failed to unzip DraftFlow.zip"; exit 1; }
 
 #Replace key vault name 
 sed -i "s/kv_to-be-replaced/${keyvaultName}/g" "create_ai_hub.py"
@@ -43,7 +42,12 @@ sed -i "s/solutionlocation_to-be-replaced/${solutionLocation}/g" "create_ai_hub.
 # Create and activate a virtual environment
 python -m venv /tmp/myenv
 source /tmp/myenv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
 
-python create_ai_hub.py
+# Install requirements
+pip install --upgrade pip
+pip install -r requirements.txt || { echo "Failed to install requirements"; exit 1; }
+
+# Run the create_ai_hub.py script
+python create_ai_hub.py || { echo "Failed to run create_ai_hub.py"; exit 1; }
+
+echo "Script completed successfully"
