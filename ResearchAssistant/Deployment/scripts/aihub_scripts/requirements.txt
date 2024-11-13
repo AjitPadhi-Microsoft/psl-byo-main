@@ -7,4 +7,3 @@ azure-mgmt-resource==23.1.0b2
 azure-mgmt-cognitiveservices
 azure-mgmt-search
 azure-mgmt-storage
-azure-mgmt-machinelearningservices

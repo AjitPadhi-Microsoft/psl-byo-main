@@ -1,10 +1,10 @@
-from azure.mgmt.machinelearningservices import MachineLearningServicesManagementClient
-from azure.mgmt.machinelearningservices.models import Workspace
+from azure.ai.ml import MLClient
 from azure.ai.ml.entities import (
     Project,
     ApiKeyConfiguration,
     AzureAISearchConnection,
     AzureOpenAIConnection,
+    Workspace,
 )
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
@@ -70,7 +70,7 @@ credential = DefaultAzureCredential()
 
 # Initialize clients
 storage_client = StorageManagementClient(credential, subscription_id)
-ml_client = MachineLearningServicesManagementClient(credential, subscription_id)
+ml_client = MLClient(credential, subscription_id, resource_group_name)
 
 # Create the storage account if it doesn't exist
 storage_account_params = StorageAccountCreateParameters(
@@ -78,18 +78,6 @@ storage_account_params = StorageAccountCreateParameters(
 )
 storage_account = storage_client.storage_accounts.begin_create(
     resource_group_name, storage_account_name, storage_account_params
-).result()
-
-# Define the AI hub
-my_hub = Workspace(
-    location=solutionLocation,
-    display_name=aihub_name,
-    identity={"type": "SystemAssigned"},
-)
-
-# Create the AI hub
-created_hub = ml_client.workspaces.begin_create_or_update(
-    resource_group_name, aihub_name, my_hub
 ).result()
 
 # Assign managed identity to the storage account
@@ -100,6 +88,17 @@ storage_account.identity = {"type": "SystemAssigned"}
 storage_client.storage_accounts.begin_create_or_update(
     resource_group_name, storage_account_name, storage_account
 ).result()
+
+# Define the AI hub
+my_hub = Workspace(
+    name=aihub_name,
+    location=solutionLocation,
+    display_name=aihub_name,
+    identity={"type": "SystemAssigned"},
+)
+
+# Create the AI hub
+created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
 # construct the project
 my_project = Project(
