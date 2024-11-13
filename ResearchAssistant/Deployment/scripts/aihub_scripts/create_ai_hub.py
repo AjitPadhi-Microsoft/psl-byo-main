@@ -1,46 +1,31 @@
+from azure.identity import DefaultAzureCredential
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import (
-    Project,
-    ApiKeyConfiguration,
-    AzureAISearchConnection,
-    AzureOpenAIConnection,
     Workspace,
     IdentityConfiguration,
+    WorkspaceConnection,
+    ManagedIdentityConfiguration,
 )
-from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku, Kind
+from azure.keyvault.secrets import SecretClient
 
 
-# Get Azure Key Vault Client
-key_vault_name = "kv_to-be-replaced"
-
-
+# Function to get secrets from Azure Key Vault
 def get_secrets_from_kv(kv_name, secret_name):
-    # Set the name of the Azure Key Vault
-    key_vault_name = kv_name
-
-    # Create a credential object using the default Azure credentials
     credential = DefaultAzureCredential()
-
-    # Create a secret client object using the credential and Key Vault name
     secret_client = SecretClient(
-        vault_url=f"https://{key_vault_name}.vault.azure.net/", credential=credential
+        vault_url=f"https://{kv_name}.vault.azure.net/", credential=credential
     )
-
-    # Retrieve the secret value
     return secret_client.get_secret(secret_name).value
 
 
 # Azure configuration
-
 key_vault_name = "kv_to-be-replaced"
 subscription_id = "subscription_to-be-replaced"
 resource_group_name = "rg_to-be-replaced"
 aihub_name = "ai_hub_" + "solutionname_to-be-replaced"
 project_name = "ai_project_" + "solutionname_to-be-replaced"
-deployment_name = "draftsinference-" + "solutionname_to-be-replaced"
 solutionLocation = "solutionlocation_to-be-replaced"
 storage_account_name = "storageaihub" + "solutionname_to-be-replaced"
 
@@ -65,6 +50,7 @@ ai_search_res_name = (
     .replace("/", "")
 )
 ai_search_key = get_secrets_from_kv(key_vault_name, "AZURE-SEARCH-KEY")
+ai_search_api_version = "2024-05-01-preview"  # Example API version
 
 # Credentials
 credential = DefaultAzureCredential()
@@ -90,7 +76,7 @@ storage_client.storage_accounts.update(
     resource_group_name, storage_account_name, storage_account
 )
 
-# Define the AI hub
+# Define the AI hub with Managed Identity
 my_hub = Workspace(
     name=aihub_name,
     location=solutionLocation,
@@ -101,38 +87,30 @@ my_hub = Workspace(
 # Create the AI hub
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
-# construct the project
-my_project = Project(
-    name=project_name,
-    location=solutionLocation,
-    display_name=project_name,
-    hub_id=created_hub.id,
-)
-
-created_project = ml_client.workspaces.begin_create(workspace=my_project).result()
-
-open_ai_connection = AzureOpenAIConnection(
+# Define the workspace connection using managed identity
+open_ai_connection = WorkspaceConnection(
     name="Azure_OpenAI",
-    api_key=open_ai_key,
+    type="AzureOpenAI",
+    target=f"https://{open_ai_res_name}.openai.azure.com/",
+    identity=IdentityConfiguration(type="SystemAssigned"),
     api_version=openai_api_version,
-    azure_endpoint=f"https://{open_ai_res_name}.openai.azure.com/",
-    open_ai_resource_id=f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.CognitiveServices/accounts/{open_ai_res_name}",
+    credentials=ManagedIdentityConfiguration(),
+    resource_id=f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.CognitiveServices/accounts/{open_ai_res_name}",
 )
 
+# Create or update the workspace connection
 ml_client.connections.create_or_update(open_ai_connection)
 
-target = f"https://{ai_search_res_name}.search.windows.net/"
-
-# Create AI Search resource
-aisearch_connection = AzureAISearchConnection(
+# Define the AI Search connection using managed identity
+ai_search_connection = WorkspaceConnection(
     name="Azure_AISearch",
-    endpoint=target,
-    credentials=ApiKeyConfiguration(key=ai_search_key),
+    type="AzureSearch",
+    target=f"https://{ai_search_res_name}.search.windows.net/",
+    identity=IdentityConfiguration(type="SystemAssigned"),
+    api_version=ai_search_api_version,
+    credentials=ManagedIdentityConfiguration(),
+    resource_id=f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Search/searchServices/{ai_search_res_name}",
 )
 
-aisearch_connection.tags["ResourceId"] = (
-    f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Search/searchServices/{ai_search_res_name}"
-)
-aisearch_connection.tags["ApiVersion"] = "2024-05-01-preview"
-
-ml_client.connections.create_or_update(aisearch_connection)
+# Create or update the AI Search connection
+ml_client.connections.create_or_update(ai_search_connection)
