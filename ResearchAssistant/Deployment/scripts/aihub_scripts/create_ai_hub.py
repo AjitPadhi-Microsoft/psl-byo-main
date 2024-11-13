@@ -123,6 +123,9 @@ my_hub = Hub(
 
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
+# Log the identity information
+print(f"Hub Identity: {created_hub.identity}")
+
 # Assign the managed identity of the hub access to the storage account
 authorization_client = AuthorizationManagementClient(credential, subscription_id)
 role_assignment_params = RoleAssignmentCreateParameters(
