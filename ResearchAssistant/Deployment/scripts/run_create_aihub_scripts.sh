@@ -8,7 +8,7 @@ solutionName="$3"
 resourceGroupName="$4"
 subscriptionId="$5"
 solutionLocation="$6"
-storageAccount="$7"
+
 
 requirementFile="requirements.txt"
 requirementFileUrl=${baseUrl}"ResearchAssistant/Deployment/scripts/aihub_scripts/requirements.txt"
@@ -39,7 +39,6 @@ sed -i "s/subscription_to-be-replaced/${subscriptionId}/g" "create_ai_hub.py"
 sed -i "s/rg_to-be-replaced/${resourceGroupName}/g" "create_ai_hub.py"
 sed -i "s/solutionname_to-be-replaced/${solutionName}/g" "create_ai_hub.py"
 sed -i "s/solutionlocation_to-be-replaced/${solutionLocation}/g" "create_ai_hub.py"
-sed -i "s/storageaccount_to-be-replaced/${storageAccount}/g" "create_ai_hub.py"
 
 pip install -r requirements.txt
 
