@@ -85,7 +85,7 @@ storage_account = storage_client.storage_accounts.get_properties(
     resource_group_name, storage_account_name
 )
 storage_account.identity = {"type": "SystemAssigned"}
-storage_client.storage_accounts.begin_create_or_update(
+storage_client.storage_accounts.update(
     resource_group_name, storage_account_name, storage_account
 ).result()
 
