@@ -117,7 +117,11 @@ storage_client = StorageManagementClient(credential, subscription_id)
 
 # Create the storage account if it doesn't exist
 storage_account_params = StorageAccountCreateParameters(
-    sku=Sku(name="Standard_LRS"), kind=Kind.STORAGE_V2, location=solutionLocation
+    sku=Sku(name="Standard_LRS"),
+    kind=Kind.STORAGE_V2,
+    location=solutionLocation,
+    identity={"type": "SystemAssigned"},
+    allow_shared_key_access=False,
 )
 storage_account = storage_client.storage_accounts.begin_create(
     resource_group_name, storage_account_name, storage_account_params
@@ -129,19 +133,22 @@ my_hub = Hub(
     location=solutionLocation,
     display_name=aihub_name,
     storage_account=storage_account.id,
-    identity=IdentityConfiguration(type="SystemAssigned")
+    identity=IdentityConfiguration(type="SystemAssigned"),
 )
 
 # Create the Hub
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
 # Assign managed identity to the storage account
-storage_account_update_params = StorageAccountUpdateParameters(
-    identity={"type": "SystemAssigned"}
-)
-storage_client.storage_accounts.update(
-    resource_group_name, storage_account_name, storage_account_update_params
-)
+# storage_account_update_params = StorageAccountUpdateParameters(
+#     identity={"type": "SystemAssigned"}
+# )
+# storage_client.storage_accounts.update(
+#     resource_group_name,
+#     storage_account_name,
+#     storage_account_update_params,
+#     storage_account_update_params,
+# )
 
 # Construct the project
 my_project = Project(
