@@ -12,6 +12,7 @@ from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.storage.blob import BlobServiceClient
 from azure.mgmt.storage import StorageManagementClient
+from azure.ai.ml.constants import ManagedServiceIdentityType
 from azure.mgmt.storage.models import (
     StorageAccountCreateParameters,
     Sku,
@@ -23,7 +24,6 @@ from azure.mgmt.storage.models import (
 from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.authorization.models import (
     RoleAssignmentCreateParameters,
-    RoleAssignmentProperties,
 )
 
 
@@ -57,33 +57,30 @@ storage_account_name = "storageaihub" + "solutionname_to-be-replaced"
 # Create a credential object using the default Azure credentials
 credential = DefaultAzureCredential()
 
-# Create a Storage Management client
-storage_client = StorageManagementClient(credential, subscription_id)
+# # Create the storage account with identity-based access
+# storage_async_operation = storage_client.storage_accounts.begin_create(
+#     resource_group_name,
+#     storage_account_name,
+#     StorageAccountCreateParameters(
+#         sku=Sku(name="Standard_LRS"),
+#         kind=Kind.STORAGE_V2,
+#         location=solutionLocation,
+#         identity=Identity(type=IdentityType.SYSTEM_ASSIGNED),
+#     ),
+# )
+# storage_account = storage_async_operation.result()
 
-# Create the storage account with identity-based access
-storage_async_operation = storage_client.storage_accounts.begin_create(
-    resource_group_name,
-    storage_account_name,
-    StorageAccountCreateParameters(
-        sku=Sku(name="Standard_LRS"),
-        kind=Kind.STORAGE_V2,
-        location=solutionLocation,
-        identity=Identity(type=IdentityType.SYSTEM_ASSIGNED),
-    ),
-)
-storage_account = storage_async_operation.result()
-
-# Disable key-based access for the storage account
-storage_client.storage_accounts.update(
-    resource_group_name,
-    storage_account_name,
-    StorageAccountUpdateParameters(
-        allow_blob_public_access=False, allow_shared_key_access=False
-    ),
-)
+# # Disable key-based access for the storage account
+# storage_client.storage_accounts.update(
+#     resource_group_name,
+#     storage_account_name,
+#     StorageAccountUpdateParameters(
+#         allow_blob_public_access=False, allow_shared_key_access=False
+#     ),
+# )
 
 # Get the storage account resource ID
-storage_account_resource_id = storage_account.id
+# storage_account_resource_id = storage_account.id
 
 # Open AI Details
 open_ai_key = get_secrets_from_kv(key_vault_name, "AZURE-OPENAI-KEY")
@@ -115,31 +112,35 @@ ml_client = MLClient(
     credential=credential,
 )
 
-# Construct a hub with the existing storage account and managed identity
+# Create a Storage Management client
+storage_client = StorageManagementClient(credential, subscription_id)
+
+# Create the storage account if it doesn't exist
+storage_account_params = StorageAccountCreateParameters(
+    sku=Sku(name="Standard_LRS"), kind=Kind.STORAGE_V2, location=solutionLocation
+)
+storage_account = storage_client.storage_accounts.begin_create(
+    resource_group_name, storage_account_name, storage_account_params
+).result()
+
+# Define the Hub with Managed Identity
 my_hub = Hub(
     name=aihub_name,
     location=solutionLocation,
     display_name=aihub_name,
-    storage_account=storage_account_resource_id,
-    identity=IdentityConfiguration(type="SystemAssigned"),
+    storage_account=storage_account.id,
+    identity=IdentityConfiguration(type="SystemAssigned")
 )
 
+# Create the Hub
 created_hub = ml_client.workspaces.begin_create(my_hub).result()
 
-# Log the identity information
-print(f"Hub Identity: {created_hub.identity}")
-
-# Assign the managed identity of the hub access to the storage account
-authorization_client = AuthorizationManagementClient(credential, subscription_id)
-role_assignment_params = RoleAssignmentCreateParameters(
-    principal_type="ServicePrincipal",
-    role_definition_id=f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
-    principal_id=created_hub.identity.principal_id
+# Assign managed identity to the storage account
+storage_account_update_params = StorageAccountUpdateParameters(
+    identity={"type": "SystemAssigned"}
 )
-authorization_client.role_assignments.create(
-    scope=storage_account_resource_id,
-    role_assignment_name=str(uuid.uuid4()),
-    parameters=role_assignment_params,
+storage_client.storage_accounts.update(
+    resource_group_name, storage_account_name, storage_account_update_params
 )
 
 # Construct the project
