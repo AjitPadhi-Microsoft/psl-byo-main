@@ -1,4 +1,3 @@
-import uuid
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import (
     Hub,
@@ -12,18 +11,10 @@ from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.storage.blob import BlobServiceClient
 from azure.mgmt.storage import StorageManagementClient
-from azure.ai.ml.constants import ManagedServiceIdentityType
 from azure.mgmt.storage.models import (
     StorageAccountCreateParameters,
     Sku,
     Kind,
-    Identity,
-    IdentityType,
-    StorageAccountUpdateParameters,
-)
-from azure.mgmt.authorization import AuthorizationManagementClient
-from azure.mgmt.authorization.models import (
-    RoleAssignmentCreateParameters,
 )
 
 
@@ -56,31 +47,6 @@ storage_account_name = "storageaihub" + "solutionname_to-be-replaced"
 
 # Create a credential object using the default Azure credentials
 credential = DefaultAzureCredential()
-
-# # Create the storage account with identity-based access
-# storage_async_operation = storage_client.storage_accounts.begin_create(
-#     resource_group_name,
-#     storage_account_name,
-#     StorageAccountCreateParameters(
-#         sku=Sku(name="Standard_LRS"),
-#         kind=Kind.STORAGE_V2,
-#         location=solutionLocation,
-#         identity=Identity(type=IdentityType.SYSTEM_ASSIGNED),
-#     ),
-# )
-# storage_account = storage_async_operation.result()
-
-# # Disable key-based access for the storage account
-# storage_client.storage_accounts.update(
-#     resource_group_name,
-#     storage_account_name,
-#     StorageAccountUpdateParameters(
-#         allow_blob_public_access=False, allow_shared_key_access=False
-#     ),
-# )
-
-# Get the storage account resource ID
-# storage_account_resource_id = storage_account.id
 
 # Open AI Details
 open_ai_key = get_secrets_from_kv(key_vault_name, "AZURE-OPENAI-KEY")
@@ -137,18 +103,9 @@ my_hub = Hub(
 )
 
 # Create the Hub
-created_hub = ml_client.workspaces.begin_create(my_hub).result()
-
-# Assign managed identity to the storage account
-# storage_account_update_params = StorageAccountUpdateParameters(
-#     identity={"type": "SystemAssigned"}
-# )
-# storage_client.storage_accounts.update(
-#     resource_group_name,
-#     storage_account_name,
-#     storage_account_update_params,
-#     storage_account_update_params,
-# )
+created_hub = ml_client.workspaces.begin_create(
+    my_hub, update_dependent_resources=True
+).result()
 
 # Construct the project
 my_project = Project(
