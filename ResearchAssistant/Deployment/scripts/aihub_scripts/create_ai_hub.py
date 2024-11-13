@@ -93,6 +93,12 @@ storage_account = storage_client.storage_accounts.begin_create(
     resource_group_name, storage_account_name, storage_account_params
 ).result()
 
+# Create a BlobServiceClient object using the managed identity credential
+blob_service_client = BlobServiceClient(
+    account_url=f"https://{storage_account_name}.blob.core.windows.net",
+    credential=ManagedIdentityCredential(),
+)
+
 # Define the Hub with Managed Identity
 my_hub = Hub(
     name=aihub_name,
@@ -142,9 +148,3 @@ aisearch_connection.tags["ResourceId"] = (
 aisearch_connection.tags["ApiVersion"] = "2024-05-01-preview"
 
 ml_client.connections.create_or_update(aisearch_connection)
-
-# Create a BlobServiceClient object using the managed identity credential and storage account URL
-blob_service_client = BlobServiceClient(
-    account_url=f"https://{storage_account_name}.blob.core.windows.net",
-    credential=ManagedIdentityCredential(),
-)
