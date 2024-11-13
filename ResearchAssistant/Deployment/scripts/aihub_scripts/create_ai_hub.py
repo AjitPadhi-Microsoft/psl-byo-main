@@ -5,6 +5,7 @@ from azure.ai.ml.entities import (
     AzureAISearchConnection,
     AzureOpenAIConnection,
     Workspace,
+    IdentityConfiguration,
 )
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
@@ -94,7 +95,7 @@ my_hub = Workspace(
     name=aihub_name,
     location=solutionLocation,
     display_name=aihub_name,
-    identity={"type": "SystemAssigned"},
+    identity=IdentityConfiguration(type="SystemAssigned"),
 )
 
 # Create the AI hub
