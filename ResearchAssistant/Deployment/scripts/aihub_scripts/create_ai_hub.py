@@ -87,7 +87,7 @@ storage_account = storage_client.storage_accounts.get_properties(
 storage_account.identity = {"type": "SystemAssigned"}
 storage_client.storage_accounts.update(
     resource_group_name, storage_account_name, storage_account
-).result()
+)
 
 # Define the AI hub
 my_hub = Workspace(
