@@ -21,7 +21,10 @@ from azure.mgmt.storage.models import (
     StorageAccountUpdateParameters,
 )
 from azure.mgmt.authorization import AuthorizationManagementClient
-from azure.mgmt.authorization.models import RoleAssignmentCreateParameters
+from azure.mgmt.authorization.models import (
+    RoleAssignmentCreateParameters,
+    RoleAssignmentProperties,
+)
 
 
 def get_secrets_from_kv(kv_name, secret_name):
@@ -129,8 +132,11 @@ print(f"Hub Identity: {created_hub.identity}")
 # Assign the managed identity of the hub access to the storage account
 authorization_client = AuthorizationManagementClient(credential, subscription_id)
 role_assignment_params = RoleAssignmentCreateParameters(
-    role_definition_id=f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",  # Replace with the appropriate role ID
-    principal_id=created_hub.identity.principal_id,
+    properties=RoleAssignmentProperties(
+        role_definition_id=f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",  # Replace with the appropriate role ID
+        principal_id=created_hub.identity.principal_id,
+        principal_type="ServicePrincipal",  # Specify the correct principal type
+    )
 )
 authorization_client.role_assignments.create(
     scope=storage_account_resource_id,
