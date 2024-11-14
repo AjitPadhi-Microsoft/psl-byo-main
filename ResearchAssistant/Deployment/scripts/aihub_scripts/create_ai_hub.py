@@ -106,6 +106,7 @@ auth_client = AuthorizationManagementClient(credential, subscription_id)
 role_assignment_params = RoleAssignmentCreateParameters(
     role_definition_id=f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe",  # Role ID for Storage Blob Data Contributor
     principal_id=principal_id,
+    principal_type="ServicePrincipal",
 )
 
 # Assign the Storage Blob Data Contributor role to the managed identity
