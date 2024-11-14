@@ -96,7 +96,7 @@ storage_account = storage_client.storage_accounts.begin_create(
 # Create a BlobServiceClient object using the managed identity credential
 blob_service_client = BlobServiceClient(
     account_url=f"https://{storage_account_name}.blob.core.windows.net",
-    credential=ManagedIdentityCredential(),
+    credential=credential,
 )
 
 # Define the Hub with Managed Identity
