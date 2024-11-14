@@ -8,7 +8,7 @@ from azure.ai.ml.entities import (
     IdentityConfiguration,
 )
 from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
+from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.models import (
@@ -16,6 +16,9 @@ from azure.mgmt.storage.models import (
     Sku,
     Kind,
 )
+from azure.mgmt.authorization import AuthorizationManagementClient
+from azure.mgmt.authorization.models import RoleAssignmentCreateParameters
+import uuid
 
 
 def get_secrets_from_kv(kv_name, secret_name):
@@ -92,6 +95,33 @@ storage_account_params = StorageAccountCreateParameters(
 storage_account = storage_client.storage_accounts.begin_create(
     resource_group_name, storage_account_name, storage_account_params
 ).result()
+
+# Get the principal ID of the managed identity
+principal_id = storage_account.identity.principal_id
+
+# Create an Authorization Management client
+auth_client = AuthorizationManagementClient(credential, subscription_id)
+
+# Define the role assignment parameters
+role_assignment_params = RoleAssignmentCreateParameters(
+    role_definition_id=f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe",  # Role ID for Storage Blob Data Contributor
+    principal_id=principal_id,
+)
+
+# Assign the Storage Blob Data Contributor role to the managed identity
+scope = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Storage/storageAccounts/{storage_account_name}"
+
+role_assignment = auth_client.role_assignments.create(
+    scope, str(uuid.uuid4()), role_assignment_params
+)
+
+print(f"Role assignment created: {role_assignment.id}")
+
+# Create a BlobServiceClient object using the managed identity credential
+blob_service_client = BlobServiceClient(
+    account_url=f"https://{storage_account_name}.blob.core.windows.net",
+    credential=credential,
+)
 
 # Create a BlobServiceClient object using the managed identity credential
 blob_service_client = BlobServiceClient(
